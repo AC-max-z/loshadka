@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "noImplicitAny": true,
+      "removeComments": false,
+      "preserveConstEnums": true,
+      "sourceMap": true,
+      "lib": ["ES2022", "ES2015", "ES6"],
+      "target": "ES6",
+      "outDir": "build"
+    },
+    "include": ["src/**/*", "index.ts"],
+    "exclude": ["node_modules", "**/*.spec.ts"]
+  }

@@ -1,0 +1,64 @@
+{
+    "environment": {
+        "clickhouseCluster": {
+            "entrypoint": "http://localhost",
+            "port": 28123,
+            "auth": null,
+            "dbName": "default",
+            "cluster": "cluster_1"
+        }
+    },
+    "loadProfiles": [
+        {
+            "iterations": 0,
+            "type": "INSERT",
+            "chunkSize": 10000,
+            "amount": 100000,
+            "db": {
+                "name": "default"
+            },
+            "table": {
+                "name": "car_positions",
+                "columns": [
+                    {
+                        "name": "carId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "position",
+                        "type": "String"
+                    }
+                ]
+            },
+            "payload": {
+                "type": "carPositions"
+            }
+        },
+        {
+            "iterations": 500,
+            "type": "SELECT",
+            "chunkSize": 10000,
+            "amount": 1000000,
+            "db": {
+                "name": "default"
+            },
+            "table": {
+                "name": "car_positions",
+                "columns": [
+                    {
+                        "name": "carId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "position",
+                        "type": "String"
+                    }
+                ]
+            },
+            "data": {
+                "columns": ["carId", "position"],
+                "groupBy": ["carId"]
+            }
+        }
+    ]
+}
