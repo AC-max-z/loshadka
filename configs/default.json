@@ -10,7 +10,7 @@
     },
     "loadProfiles": [
         {
-            "iterations": 0,
+            "iterations": 50,
             "type": "INSERT",
             "chunkSize": 10000,
             "amount": 100000,
@@ -35,7 +35,7 @@
             }
         },
         {
-            "iterations": 500,
+            "iterations": 100,
             "type": "SELECT",
             "chunkSize": 10000,
             "amount": 1000000,
