@@ -3,7 +3,7 @@
 
 ## Load scenarios list
 
- Case 0 ([TEL-731](https://belka-car.atlassian.net/browse/TEL-731)):
+ Case 0 (TEL-731):
 
 - **goal:** define clickhouse cluster capacity for simultaneous INSERT and SELECT queries
     (at which rate we will experience failures/errors)
