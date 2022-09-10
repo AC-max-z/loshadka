@@ -105,7 +105,6 @@ export class ClickHouseClient {
         this.clusterName
             ? (statement = `INSERT INTO ${table.name} (${columnNames})`)
             : (statement = `INSERT INTO ${table.name} (${columnNames})`);
-        console.log(`Insert statement: ${statement}`);
         return statement;
     }
 
@@ -135,14 +134,27 @@ export class ClickHouseClient {
             ON CLUSTER ${this.clusterName} (${tableDeclaration})
             ENGINE=MergeTree() ORDER BY ${columnNames[0]}`)
             : (statement = `CREATE TABLE IF NOT EXISTS ${table.name} (${tableDeclaration}) ENGINE=MergeTree()`);
-
-        console.log(`Create table statement: ${statement}`);
         return statement;
     }
 
-    public selectAll(table: Table, chunkSize: number) {
+    public selectSpecificFields(
+        table: Table,
+        chunkSize: number,
+        fields?: string[],
+        order?: string | string[]
+    ) {
+        // TODO: implement me
+    }
+
+    public selectAllTop(table: Table, chunkSize: number) {
         return this.clickhouse
             .query(`SELECT * FROM ${table.name} LIMIT ${chunkSize}`)
+            .toPromise();
+    }
+
+    public selectAll(table: Table) {
+        return this.clickhouse
+            .query(`SELECT * FROM ${table.name}}`)
             .toPromise();
     }
 

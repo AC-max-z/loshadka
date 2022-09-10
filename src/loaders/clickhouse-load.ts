@@ -1,6 +1,10 @@
 import { CarPositionGenerator } from '../util/generators/car-positions-generator.js';
 import { ClickHouseClient } from '../clients/ch-client.js';
-import { Environment, LoadProfile } from '../types/test-config.js';
+import {
+    Environment,
+    LoadProfile,
+    LoadProfileType,
+} from '../types/test-config.js';
 import { CarPosition } from '../types/car-position.js';
 import winston = require('winston');
 import { UUID } from '../types/uuid.js';
@@ -13,7 +17,6 @@ export class ClickHouseLoader {
     logger: winston.Logger;
     reporter: Reporter;
 
-    // 0. Entrypoint (recieves env config data, load profile data)
     constructor(
         profile: LoadProfile,
         env: Environment,
@@ -29,8 +32,6 @@ export class ClickHouseLoader {
         );
         this.reporter = reporter;
     }
-
-    // 1. For each scenario from load profile run desired script
 
     /**
      * Loads clickhouse with INSERT queries
@@ -49,7 +50,7 @@ export class ClickHouseLoader {
         this.logger.info(
             `Total amount of queries to be performed is ${totalAmt}`
         );
-        let arrayOfBatches: object[];
+        let arrayOfBatches: object[][];
 
         switch (this.profile.payload.type) {
             case 'carPositions':
@@ -107,15 +108,18 @@ export class ClickHouseLoader {
      * Inserts supplied batches of payloads into clickhouse
      * @private
      *
-     * @param {Array<Object>} payloads
+     * @param {Array<Array<Object>>} payloads
      * @returns {Promise}
      */
-    private async _sendInsertRequests(payloads: object[]) {
+    private async _sendInsertRequests(payloads: object[][]) {
         for (const batch of payloads) {
             const requestId = new UUID();
             const startTime = new Date();
+            const batchSize = batch.length;
+            const type = LoadProfileType.Insert;
             let endTime;
             let result;
+            let duration;
             try {
                 // TODO: redo with better async here
                 await this.clickhouseClient.insert(
@@ -124,16 +128,22 @@ export class ClickHouseLoader {
                     batch
                 );
                 endTime = new Date();
+                duration = endTime.getTime() - startTime.getTime();
                 result = 'Success';
+
                 this.logger.info(`Request ${requestId} ended up with success!`);
                 this.reporter.reportQueryResult(
                     result,
-                    requestId,
+                    requestId.toString(),
                     startTime,
-                    endTime
+                    endTime,
+                    type,
+                    batchSize,
+                    duration
                 );
             } catch (error) {
                 endTime = new Date();
+                duration = endTime.getTime() - startTime.getTime();
                 result = `Error: ${error}`;
                 this.logger.error(
                     `Request ${requestId} ended up with error!`,
@@ -141,9 +151,12 @@ export class ClickHouseLoader {
                 );
                 this.reporter.reportQueryResult(
                     result,
-                    requestId,
+                    requestId.toString(),
                     startTime,
-                    endTime
+                    endTime,
+                    type,
+                    batchSize,
+                    duration
                 );
             }
         }
@@ -161,7 +174,7 @@ export class ClickHouseLoader {
                     `Executing iteration ${iteration} of ${iterations}`
                 );
                 this.logger.info(`Profile type: ${this.profile.type}`);
-                await this._sendSelectAllQueries();
+                await this._sendSelectTopQueries();
                 this.logger.info(
                     `All queries executed for iteration ${iteration} of ${iterations}!`
                 );
@@ -174,28 +187,34 @@ export class ClickHouseLoader {
         }
     }
 
-    private async _sendSelectAllQueries() {
+    private async _sendSelectTopQueries() {
         const requestId = new UUID();
         const startTime = new Date();
         let endTime;
         let result;
+        let duration;
         try {
             // TODO: redo with better async here
-            await this.clickhouseClient.selectAll(
+            await this.clickhouseClient.selectAllTop(
                 this.profile.table,
                 this.profile.chunkSize
             );
             endTime = new Date();
+            duration = endTime.getTime() - startTime.getTime();
             result = 'Success';
             this.logger.info(`Request ${requestId} ended up with success!`);
             this.reporter.reportQueryResult(
                 result,
-                requestId,
+                requestId.toString(),
                 startTime,
-                endTime
+                endTime,
+                LoadProfileType.Select,
+                this.profile.chunkSize,
+                duration
             );
         } catch (error) {
             endTime = new Date();
+            duration = endTime.getTime() - startTime.getTime();
             result = `Error: ${error}`;
             this.logger.error(
                 `Request ${requestId} ended up with error!`,
@@ -203,9 +222,12 @@ export class ClickHouseLoader {
             );
             this.reporter.reportQueryResult(
                 result,
-                requestId,
+                requestId.toString(),
                 startTime,
-                endTime
+                endTime,
+                LoadProfileType.Select,
+                this.profile.chunkSize,
+                duration
             );
         }
     }
@@ -219,9 +241,9 @@ export class ClickHouseLoader {
      * @returns {Array<Array<unknown>>}
      */
     private _splitPayloadsIntoBatches(
-        payloads: unknown[] | CarPosition[],
+        payloads: object[] | CarPosition[],
         batchSize: number
-    ): unknown[][] {
+    ): object[][] {
         this.logger.info(
             `Splitting payloads into batches of size ${batchSize}...`
         );
@@ -249,5 +271,3 @@ export class ClickHouseLoader {
         return arrayOfBatches;
     }
 }
-// 2. ???
-// 3. PROFIT!
