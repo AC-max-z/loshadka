@@ -100,7 +100,7 @@ export class ClickHouseClient {
      */
     private _composeInsertQuery(table: Table): string {
         const columnNames: string[] = [];
-        table.columns.forEach((column) => columnNames.push(column.name));
+        table.columns.forEach(column => columnNames.push(column.name));
         let statement: string;
         this.clusterName
             ? (statement = `INSERT INTO ${table.name} (${columnNames})`)
@@ -120,7 +120,7 @@ export class ClickHouseClient {
     private _composeCreateTableQuery(table: Table): string {
         const columnNames: string[] = [];
         const dataTypes: string[] = [];
-        table.columns.forEach((column) => {
+        table.columns.forEach(column => {
             columnNames.push(column.name);
             dataTypes.push(column.type);
         });

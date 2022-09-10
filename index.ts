@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { ConfigReader } from './src/util/config-reader';
+import ConfigReader from './src/util/config-reader';
 import { ClickHouseLoader } from './src/loaders/clickhouse-load';
 import { LoadProfile, LoadProfileType } from './src/types/test-config';
 import * as winston from 'winston';
