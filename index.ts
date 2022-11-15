@@ -63,7 +63,8 @@ logger.info(
 const configReader = new ConfigReader(options.config, logger);
 const testConfig = configReader.getTestConfig();
 
-logger.info('Got config!\n', testConfig.toString());
+logger.info('Got config!');
+logger.info(testConfig);
 
 const envConfig = configReader.getEnvConfig();
 const loadProfiles = configReader.getLoadProfiles();
@@ -96,4 +97,5 @@ profileManager
     .catch((err) => {
         logger.error('Something went wrong!😭');
         logger.error(err);
+        process.exit(1);
     });

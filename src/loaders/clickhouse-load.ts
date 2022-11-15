@@ -37,6 +37,7 @@ export class ClickHouseLoader {
      * Loads clickhouse with INSERT queries
      *
      * @returns {Promise}
+     * @throws {Error}
      */
     public async loadInserts(): Promise<void> {
         this.logger.info('Start executing INSERT profile');
@@ -44,7 +45,7 @@ export class ClickHouseLoader {
         const payloads = [];
         const batchSize = this.profile.chunkSize;
         const totalAmt = this.profile.amount;
-        const iterations = this.profile.iterations || 1;
+        const iterations = this.profile.iterations || 0;
 
         this.logger.info(`Batch size is ${batchSize}`);
         this.logger.info(
@@ -95,6 +96,7 @@ export class ClickHouseLoader {
                             'Some eror occured when executing insert queries!'
                         );
                         this.logger.error(error);
+                        throw error;
                     }
                 }
                 break;
@@ -113,7 +115,7 @@ export class ClickHouseLoader {
      */
     private async _sendInsertRequests(payloads: object[][]) {
         for (const batch of payloads) {
-            const requestId = new UUID();
+            const requestId = new UUID().toString();
             const startTime = new Date();
             const batchSize = batch.length;
             const type = LoadProfileType.Insert;
@@ -134,7 +136,7 @@ export class ClickHouseLoader {
                 this.logger.info(`Request ${requestId} ended up with success!`);
                 this.reporter.reportQueryResult(
                     result,
-                    requestId.toString(),
+                    requestId,
                     startTime,
                     endTime,
                     type,
@@ -145,13 +147,11 @@ export class ClickHouseLoader {
                 endTime = new Date();
                 duration = endTime.getTime() - startTime.getTime();
                 result = `Error: ${error}`;
-                this.logger.error(
-                    `Request ${requestId} ended up with error!`,
-                    error
-                );
+                this.logger.error(`Request ${requestId} ended up with error!`);
+                this.logger.error(error);
                 this.reporter.reportQueryResult(
                     result,
-                    requestId.toString(),
+                    requestId,
                     startTime,
                     endTime,
                     type,
@@ -164,10 +164,13 @@ export class ClickHouseLoader {
 
     /**
      * Loads clickhouse with SELECT queries
+     *
+     * @returns {Promise}
+     * @throws {Error}
      */
     public async loadSelects() {
         // TODO: implement me
-        const iterations = this.profile.iterations || 1;
+        const iterations = this.profile.iterations || 0;
         for (let iteration = 0; iteration < iterations; iteration++) {
             try {
                 this.logger.info(
@@ -183,6 +186,7 @@ export class ClickHouseLoader {
                     'Some eror occured when executing insert queries!'
                 );
                 this.logger.error(error);
+                throw error;
             }
         }
     }
@@ -216,10 +220,8 @@ export class ClickHouseLoader {
             endTime = new Date();
             duration = endTime.getTime() - startTime.getTime();
             result = `Error: ${error}`;
-            this.logger.error(
-                `Request ${requestId} ended up with error!`,
-                error
-            );
+            this.logger.error(`Request ${requestId} ended up with error!`);
+            this.logger.error(error);
             this.reporter.reportQueryResult(
                 result,
                 requestId.toString(),
