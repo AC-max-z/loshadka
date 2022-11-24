@@ -2,8 +2,9 @@
     "name": "loshadka",
     "version": "0.1.0",
     "description": "Load tests for car history services and stuff",
-    "main": "index.js",
+    "main": "./build/index.js",
     "scripts": {
+        "start": "node ./build/index.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "Max Zamota",

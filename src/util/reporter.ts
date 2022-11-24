@@ -3,6 +3,7 @@ import winston = require('winston');
 import { dirname } from 'path';
 import { LoadProfileType } from '../types/test-config';
 import prc = require('percentile');
+import path = require('path');
 
 type QueryResult = {
     start: Date;
@@ -134,7 +135,11 @@ export class Reporter {
         };
         const rootPath = dirname(require.main.filename);
         fs.writeFileSync(
-            `${rootPath}/log/report-${new Date()}.json`,
+            path.join(
+                `${rootPath}`,
+                'log',
+                `report-${new Date().getTime()}.json`
+            ),
             JSON.stringify(report, null, 2),
             'utf-8'
         );
