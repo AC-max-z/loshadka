@@ -1,6 +1,8 @@
 
 # Car positions history load tests
 
+> INB4 found clickhouse-benchmark tool which pretty much does what was necessary with no need to reinvent the wheel. Hence this one is unfinished bicycle 😏  
+> Maybe someday somehow something will be useful tho...or not
 ## Load scenarios list
 
 - **goal:** define clickhouse cluster capacity for simultaneous INSERT and SELECT queries
