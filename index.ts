@@ -1,10 +1,9 @@
 import { Command } from 'commander';
-import ConfigReader from './src/util/config-reader';
-import { ClickHouseLoader } from './src/loaders/clickhouse-load';
-import { LoadProfile, LoadProfileType } from './src/types/test-config';
+import { ConfigReader } from './src/util/config-reader';
 import * as winston from 'winston';
 import { Reporter } from './src/util/reporter';
 import { dirname } from 'path';
+import { ProfileManager } from './src/util/profile-manager';
 const rootPath = dirname(require.main.filename);
 
 const program = new Command();
@@ -18,10 +17,9 @@ program
     )
     .parse();
 
-// 0.read args
 const startTime = new Date();
 const options = program.opts();
-// 1.get correct test config by supplied args
+
 const logConfig = {
     format: winston.format.combine(
         winston.format.colorize(),
@@ -52,6 +50,7 @@ const logConfig = {
         }),
     ],
 };
+
 const logger: winston.Logger = winston.createLogger(logConfig);
 const reporter = new Reporter(logger);
 reporter.setStart(startTime);
@@ -64,77 +63,39 @@ logger.info(
 const configReader = new ConfigReader(options.config, logger);
 const testConfig = configReader.getTestConfig();
 
-logger.info('Got config!\n', testConfig.toString());
+logger.info('Got config!');
+logger.info(testConfig);
 
 const envConfig = configReader.getEnvConfig();
 const loadProfiles = configReader.getLoadProfiles();
-// 2.based on load profiles specified in config - launch correct script for each
 
 logger.info(
     `So...what do we have here? Looks like there are ${loadProfiles.length} profiles specified. Here they are:`
 );
 logger.info(loadProfiles);
 
-async function runProfiles() {
-    for await (const profile of loadProfiles) {
-        const loader: ClickHouseLoader = _initclickhouseLoader(profile);
+const profileManager = new ProfileManager(
+    loadProfiles,
+    logger,
+    envConfig,
+    reporter
+);
 
-        logger.info('Starting profile:\n', profile.toString());
+profileManager
+    .runProfiles()
+    .then(() => {
+        logger.info('YAY! Finished your work!');
+        logger.info(
+            'Hope that I did good and you are satisfied with results. CYA!'
+        );
 
-        switch (profile.type) {
-            case LoadProfileType.Insert:
-                logger.info(
-                    'Ok looks like we have INSERT profile here...Let`s stuff this database with our DATA!!!'
-                );
-                try {
-                    await loader.loadInserts();
-                } catch (error) {
-                    logger.log(error);
-                }
-                break;
-            case LoadProfileType.Select:
-                logger.info(
-                    'Hmmm...this one is SELECT profile here. Okay, let`s fetch you some stuff...'
-                );
-
-                try {
-                    await loader.loadSelects();
-                    logger.info(`Done executing profile\n ${profile.type}`);
-                } catch (error) {
-                    console.log(error);
-                }
-                break;
-            default:
-                logger.error(
-                    'Oops! Looks like there is no implementation for this profile (yet?):('
-                );
-                logger.warn(
-                    'Please make sure you`ve specified the profile type correctly in supplied config...'
-                );
-                logger.warn(
-                    'If you are like 100% sure that it is supposed to work\n' +
-                        'or wish this stuff to be added, please open an issue in repo where you found me!'
-                );
-                // TODO: implement me
-                break;
-        }
-    }
-}
-
-function _initclickhouseLoader(profile: LoadProfile): ClickHouseLoader {
-    return new ClickHouseLoader(profile, envConfig, logger, reporter);
-}
-// 3.???
-
-runProfiles().then(() => {
-    logger.info('YAY! Finished your work!');
-    logger.info(
-        'Hope that I did good and you are satisfied with results. CYA!'
-    );
-
-    const endDate = new Date();
-    reporter.setEnd(endDate);
-    reporter.publish();
-    process.exit(0);
-});
-// 4.PROFIT
+        const endDate = new Date();
+        reporter.setEnd(endDate);
+        reporter.publish();
+        process.exit(0);
+    })
+    .catch(err => {
+        logger.error('Something went wrong!😭');
+        logger.error(err);
+        process.exit(1);
+    });
