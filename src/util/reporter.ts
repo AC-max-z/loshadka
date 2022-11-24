@@ -97,7 +97,7 @@ export class Reporter {
     private _calculateAverage() {
         let totalTimeInserts = 0;
         let totalTimeSelects = 0;
-        this.queryResults.forEach((result) => {
+        this.queryResults.forEach(result => {
             if (result.type == LoadProfileType.Insert) {
                 totalTimeInserts += result.duration;
                 this.amountInserts++;

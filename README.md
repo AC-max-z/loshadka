@@ -3,7 +3,6 @@
 
 ## Load scenarios list
 
-
 - **goal:** define clickhouse cluster capacity for simultaneous INSERT and SELECT queries
     (at which rate we will experience failures/errors)
 - **reason:** to be sure we can process production rate of car position events stream
